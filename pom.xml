@@ -15,28 +15,10 @@
 	</scm>
 
 	<repositories>
-		<!-- Maven Central -->
-		<repository>
-			<id>maven-central</id>
-			<name>Maven Central Repo</name>
-			<url>https://repo.maven.apache.org/maven2</url>
-		</repository>
-		<!-- Repository for the specified MQTT version -->
 		<repository>
 			<id>eclipse-paho</id>
 			<name>Eclipse Paho Repo</name>
 			<url>https://repo.eclipse.org/content/repositories/paho-releases/</url>
-		</repository>
-		<!-- Repository for the specified Kafka version -->
-		<repository>
-			<id>apache-kafka</id>
-			<name>Apache Kafka Repo</name>
-			<url>http://clojars.org/repo/</url>
-		</repository>
-		<repository>
-			<id>mvnrepository</id>
-			<name>mvnrepository</name>
-			<url>http://www.mvnrepository.com</url>
 		</repository>
 	</repositories>
 
@@ -46,11 +28,13 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>1.9.5</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.paho</groupId>
@@ -59,39 +43,29 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka</artifactId>
-			<version>0.7.2</version>
+			<artifactId>kafka_2.12</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
-			<version>2.8.2</version>
+			<version>2.12.4</version>
 		</dependency>
 		<dependency>
 			<groupId>args4j</groupId>
 			<artifactId>args4j</artifactId>
-			<version>2.0.25</version>
+			<version>2.33</version>
 		</dependency>
 		<dependency>
 			<groupId>com.101tec</groupId>
 			<artifactId>zkclient</artifactId>
-			<version>0.3</version>
+			<version>0.10</version>
 		</dependency>
 	</dependencies>
 
 	<!-- Plugins -->
 	<build>
 		<plugins>
-			<!-- Set the compiler plugin - override default JDK version -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
 			<!-- These plugins are needed for doing releases -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -119,9 +93,13 @@
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.6.2.201302030002</version>
 			</plugin>
+			<!-- uberjar packaging -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4</version>
 				<configuration>
+					<finalName>${project.build.finalName}-uber</finalName>
 					<archive>
 						<manifest>
 							<mainClass>com.m2mci.mqttKafkaBridge.Bridge</mainClass>
@@ -130,7 +108,17 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
+					<appendAssemblyId>false</appendAssemblyId>
 				</configuration>
+				<executions>
+					<execution>
+						<id>assemble-all</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

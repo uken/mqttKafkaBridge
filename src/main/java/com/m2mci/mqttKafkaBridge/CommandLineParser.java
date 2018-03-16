@@ -15,11 +15,11 @@ public class CommandLineParser {
 	@Option(name="--id", usage="MQTT Client ID")
 	private String clientId = "mqttKafkaBridge";
 
-	@Option(name="--uri", usage="MQTT Server URI")
-	private String serverURI = DEFAULT_MQTT_SERVER_URI;
+	@Option(name="--mqtt", usage="MQTT Server URI")
+	private String mqttServer = DEFAULT_MQTT_SERVER_URI;
 
-	@Option(name="--bs", usage="Bootstrap Kafka Server, e.g. 10.0.1.100:9092")
-	private String bootstrapKafkaServer = DEFAULT_BOOTSTRAP_KAFKA;
+	@Option(name="--kafka", usage="Bootstrap Kafka Server, e.g. 10.0.1.100:9092")
+	private String kafkaServer = DEFAULT_BOOTSTRAP_KAFKA;
 	
 	@Option(name="--topics", usage="MQTT topic filters (comma-separated)")
 	private String mqttTopicFilters = ALL_MQTT_TOPICS;
@@ -33,12 +33,12 @@ public class CommandLineParser {
 		return clientId;
 	}
 
-	public String getServerURI() {
-		return serverURI;
+	public String getMqttServer() {
+		return mqttServer;
 	}
 
-	public String getBootstrapKafkaServer() {
-		return bootstrapKafkaServer;
+	public String getKafkaServer() {
+		return kafkaServer;
 	}
 
 	public String[] getMqttTopicFilters() {

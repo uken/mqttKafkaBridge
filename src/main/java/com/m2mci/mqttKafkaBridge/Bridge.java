@@ -1,6 +1,5 @@
 package com.m2mci.mqttKafkaBridge;
 
-import kafka.message.Message;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
@@ -20,11 +19,11 @@ public class Bridge implements MqttCallback {
 		IMqttToken token = mqtt.connect();
 		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrapServers);
-		props.put("acks", "all");
+		props.put("acks", "0");
 		props.put("retries", 0);
-		props.put("batch.size", 16384);
+		props.put("batch.size", 32000);
 		props.put("linger.ms", 1);
-		props.put("buffer.memory", 33554432);
+		props.put("buffer.memory", 128000000);
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 		kafkaProducer = new KafkaProducer<String, byte[]>(props);
@@ -83,7 +82,7 @@ public class Bridge implements MqttCallback {
 			parser = new CommandLineParser();
 			parser.parse(args);
 			Bridge bridge = new Bridge();
-			bridge.connect(parser.getServerURI(), parser.getClientId(), parser.getBootstrapKafkaServer());
+			bridge.connect(parser.getMqttServer(), parser.getClientId(), parser.getKafkaServer());
 			bridge.subscribe(parser.getMqttTopicFilters());
 		} catch (MqttException e) {
 			e.printStackTrace(System.err);

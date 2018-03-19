@@ -12,8 +12,10 @@ public class Bridge implements MqttCallback {
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	private MqttAsyncClient mqtt;
 	private KafkaProducer<String, byte[]> kafkaProducer;
+	private static final int MQTT_CLIENT_ID_MAX_LENGTH = 23;
 	
-	public void connect(String serverURI, String clientId, String bootstrapServers) throws MqttException {
+	private void connect(String serverURI, String clientId, String bootstrapServers, int kafkaBatchSize, int kafkaBufferSize) throws MqttException {
+		logger.info("Connecting to mqtt with clientId: " + clientId);
 		mqtt = new MqttAsyncClient(serverURI, clientId);
 		mqtt.setCallback(this);
 		IMqttToken token = mqtt.connect();
@@ -21,9 +23,9 @@ public class Bridge implements MqttCallback {
 		props.put("bootstrap.servers", bootstrapServers);
 		props.put("acks", "0");
 		props.put("retries", 0);
-		props.put("batch.size", 32000);
+		props.put("batch.size", kafkaBatchSize);
 		props.put("linger.ms", 1);
-		props.put("buffer.memory", 128000000);
+		props.put("buffer.memory", kafkaBufferSize);
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 		kafkaProducer = new KafkaProducer<String, byte[]>(props);
@@ -31,12 +33,12 @@ public class Bridge implements MqttCallback {
 		logger.info("Connected to MQTT and Kafka");
 	}
 
-	public void reconnect() throws MqttException {
+	private void reconnect() throws MqttException {
 		IMqttToken token = mqtt.connect();
 		token.waitForCompletion();
 	}
 
-	public void subscribe(String[] mqttTopicFilters) throws MqttException {
+	private void subscribe(String[] mqttTopicFilters) throws MqttException {
 		int[] qos = new int[mqttTopicFilters.length];
 		for (int i = 0; i < qos.length; ++i) {
 			qos[i] = 0;
@@ -73,6 +75,14 @@ public class Bridge implements MqttCallback {
 		kafkaProducer.send(data);
 	}
 
+	private static String getClientId(CommandLineParser parser) {
+		String clientId = parser.getClientId();
+		if (clientId == null) {
+			clientId = ("bridge-" + java.util.UUID.randomUUID().toString()).substring(0, MQTT_CLIENT_ID_MAX_LENGTH);
+		}
+		return clientId;
+	}
+
 	/**
 	 * @param args
 	 */
@@ -82,7 +92,7 @@ public class Bridge implements MqttCallback {
 			parser = new CommandLineParser();
 			parser.parse(args);
 			Bridge bridge = new Bridge();
-			bridge.connect(parser.getMqttServer(), parser.getClientId(), parser.getKafkaServer());
+			bridge.connect(parser.getMqttServer(), getClientId(parser), parser.getKafkaServer(), parser.getKafkaBatchSize(), parser.getKafkaBufferSize());
 			bridge.subscribe(parser.getMqttTopicFilters());
 		} catch (MqttException e) {
 			e.printStackTrace(System.err);

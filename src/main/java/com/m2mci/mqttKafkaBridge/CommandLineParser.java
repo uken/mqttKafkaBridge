@@ -12,8 +12,11 @@ public class CommandLineParser {
 	private static final String DEFAULT_BOOTSTRAP_KAFKA = "localhost:9092";
 	private static final String DEFAULT_MQTT_SERVER_URI = "tcp://localhost:1883";
 
-	@Option(name="--id", usage="MQTT Client ID")
-	private String clientId = "mqttKafkaBridge";
+	private static final int DEFAULT_KAFKA_BATCH_SIZE = 32000;
+	private static final int DEFAULT_KAFKA_BUFFER_SIZE = 128000000;
+
+	@Option(name="--id", usage="MQTT Client ID, if not specified, will set a random client id with prefix bridge-")
+	private String clientId = null;
 
 	@Option(name="--mqtt", usage="MQTT Server URI")
 	private String mqttServer = DEFAULT_MQTT_SERVER_URI;
@@ -23,6 +26,12 @@ public class CommandLineParser {
 	
 	@Option(name="--topics", usage="MQTT topic filters (comma-separated)")
 	private String mqttTopicFilters = ALL_MQTT_TOPICS;
+
+	@Option(name="--kafka-batch-size", usage="Kafka batch size, e.g. 1000")
+	private int kafkaBatchSize = DEFAULT_KAFKA_BATCH_SIZE;
+
+	@Option(name="--kafka-buffer-size", usage="Kafka batch buffer size in bytes, e.g. 64000000")
+	private int kafkaBufferSize = DEFAULT_KAFKA_BUFFER_SIZE;
 	
 	@Option(name="--help", aliases="-h", usage="Show help")
 	private boolean showHelp = false;
@@ -57,5 +66,13 @@ public class CommandLineParser {
 		PrintStream stream = new PrintStream(out);
 		stream.println("java " + Bridge.class.getName() + " [options...]");
 		parser.printUsage(out);
+	}
+
+	public int getKafkaBatchSize() {
+		return kafkaBatchSize;
+	}
+
+	public int getKafkaBufferSize() {
+		return kafkaBufferSize;
 	}
 }

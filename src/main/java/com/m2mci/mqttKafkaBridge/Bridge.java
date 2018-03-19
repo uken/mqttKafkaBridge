@@ -4,8 +4,9 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.*;
-import org.kohsuke.args4j.CmdLineException;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 public class Bridge implements MqttCallback {
@@ -75,30 +76,31 @@ public class Bridge implements MqttCallback {
 		kafkaProducer.send(data);
 	}
 
-	private static String getClientId(CommandLineParser parser) {
-		String clientId = parser.getClientId();
-		if (clientId == null) {
-			clientId = ("bridge-" + java.util.UUID.randomUUID().toString()).substring(0, MQTT_CLIENT_ID_MAX_LENGTH);
-		}
-		return clientId;
+	private static String getClientId() {
+		return ("bridge-" + java.util.UUID.randomUUID().toString()).substring(0, MQTT_CLIENT_ID_MAX_LENGTH);
 	}
 
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		CommandLineParser parser = null;
+	public static void main(String[] args) throws IOException {
+
+		Properties properties = new Properties();
+		properties.load(new FileInputStream(args[0]));
+
+		String mqttServer = properties.getProperty("mqtt");
+		String clientId = getClientId();
+		String kafkaServer = properties.getProperty("kafka");
+		int kafkaBatchSize = Integer.parseInt(properties.getProperty("kafka.batch.size"));
+		int kafkaBufferSize = Integer.parseInt(properties.getProperty("kafka.buffer.size"));
+		String[] topics = properties.getProperty("topics").split(",");
+
 		try {
-			parser = new CommandLineParser();
-			parser.parse(args);
 			Bridge bridge = new Bridge();
-			bridge.connect(parser.getMqttServer(), getClientId(parser), parser.getKafkaServer(), parser.getKafkaBatchSize(), parser.getKafkaBufferSize());
-			bridge.subscribe(parser.getMqttTopicFilters());
+			bridge.connect(mqttServer, clientId, kafkaServer, kafkaBatchSize, kafkaBufferSize);
+			bridge.subscribe(topics);
 		} catch (MqttException e) {
 			e.printStackTrace(System.err);
-		} catch (CmdLineException e) {
-			System.err.println(e.getMessage());
-			parser.printUsage(System.err);
 		}
 	}
 }

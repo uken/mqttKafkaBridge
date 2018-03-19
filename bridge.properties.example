@@ -1,0 +1,5 @@
+kafka = localhost:9092
+kafka.batch.size = 32000
+kafka.buffer.size = 128000000
+mqtt = tcp://localhost:1883
+topics = #

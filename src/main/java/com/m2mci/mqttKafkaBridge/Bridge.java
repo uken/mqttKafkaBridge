@@ -4,6 +4,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,9 +16,9 @@ public class Bridge implements MqttCallback {
 	private KafkaProducer<String, byte[]> kafkaProducer;
 	private static final int MQTT_CLIENT_ID_MAX_LENGTH = 23;
 	
-	private void connect(String serverURI, String clientId, String bootstrapServers, int kafkaBatchSize, int kafkaBufferSize) throws MqttException {
+	private void connect(String serverURI, String clientId, String bootstrapServers, int kafkaBatchSize, int kafkaBufferSize, String dataDir) throws MqttException {
 		logger.info("Connecting to mqtt with clientId: " + clientId);
-		mqtt = new MqttAsyncClient(serverURI, clientId);
+		mqtt = new MqttAsyncClient(serverURI, clientId, new MqttDefaultFilePersistence(dataDir));
 		mqtt.setCallback(this);
 		IMqttToken token = mqtt.connect();
 		Properties props = new Properties();
@@ -43,6 +44,10 @@ public class Bridge implements MqttCallback {
 		int[] qos = new int[mqttTopicFilters.length];
 		for (int i = 0; i < qos.length; ++i) {
 			qos[i] = 0;
+		}
+		logger.info("Subscribing to topics:");
+		for ( String t : mqttTopicFilters) {
+			logger.info(t);
 		}
 		mqtt.subscribe(mqttTopicFilters, qos);
 	}
@@ -90,6 +95,7 @@ public class Bridge implements MqttCallback {
 
 		String mqttServer = properties.getProperty("mqtt");
 		String clientId = getClientId();
+		String mqttDataDir = properties.getProperty("mqtt.datadir");
 		String kafkaServer = properties.getProperty("kafka");
 		int kafkaBatchSize = Integer.parseInt(properties.getProperty("kafka.batch.size"));
 		int kafkaBufferSize = Integer.parseInt(properties.getProperty("kafka.buffer.size"));
@@ -97,7 +103,7 @@ public class Bridge implements MqttCallback {
 
 		try {
 			Bridge bridge = new Bridge();
-			bridge.connect(mqttServer, clientId, kafkaServer, kafkaBatchSize, kafkaBufferSize);
+			bridge.connect(mqttServer, clientId, kafkaServer, kafkaBatchSize, kafkaBufferSize, mqttDataDir);
 			bridge.subscribe(topics);
 		} catch (MqttException e) {
 			e.printStackTrace(System.err);

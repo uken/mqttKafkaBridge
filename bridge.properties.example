@@ -4,3 +4,4 @@ kafka.buffer.size = 128000000
 mqtt = tcp://localhost:1883
 mqtt.datadir = .
 topics = #
+numOfBridges=3

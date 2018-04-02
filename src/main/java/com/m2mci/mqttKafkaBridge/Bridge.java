@@ -94,17 +94,19 @@ public class Bridge implements MqttCallback {
 		properties.load(new FileInputStream(args[0]));
 
 		String mqttServer = properties.getProperty("mqtt");
-		String clientId = getClientId();
 		String mqttDataDir = properties.getProperty("mqtt.datadir");
 		String kafkaServer = properties.getProperty("kafka");
 		int kafkaBatchSize = Integer.parseInt(properties.getProperty("kafka.batch.size"));
 		int kafkaBufferSize = Integer.parseInt(properties.getProperty("kafka.buffer.size"));
+		int numOfBridges = Integer.parseInt(properties.getProperty("numOfBridges"));
 		String[] topics = properties.getProperty("topics").split(",");
 
 		try {
-			Bridge bridge = new Bridge();
-			bridge.connect(mqttServer, clientId, kafkaServer, kafkaBatchSize, kafkaBufferSize, mqttDataDir);
-			bridge.subscribe(topics);
+			for (int i = 0; i < numOfBridges; i++) {
+				Bridge bridge = new Bridge();
+				bridge.connect(mqttServer, getClientId(), kafkaServer, kafkaBatchSize, kafkaBufferSize, mqttDataDir);
+				bridge.subscribe(topics);
+			}
 		} catch (MqttException e) {
 			e.printStackTrace(System.err);
 		}

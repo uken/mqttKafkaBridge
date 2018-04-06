@@ -23,7 +23,7 @@ public class Bridge implements MqttCallback {
 		IMqttToken token = mqtt.connect();
 		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrapServers);
-		props.put("acks", "0");
+		props.put("acks", "1");
 		props.put("retries", 0);
 		props.put("batch.size", kafkaBatchSize);
 		props.put("linger.ms", 1);

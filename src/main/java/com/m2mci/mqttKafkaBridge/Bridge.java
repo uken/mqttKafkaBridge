@@ -15,6 +15,7 @@ public class Bridge implements MqttCallback {
 	private MqttAsyncClient mqtt;
 	private KafkaProducer<String, byte[]> kafkaProducer;
 	private static final int MQTT_CLIENT_ID_MAX_LENGTH = 23;
+	private static String[] topics;
 	
 	private void connect(String serverURI, String clientId, String bootstrapServers, int kafkaBatchSize, int kafkaBufferSize, String dataDir) throws MqttException {
 		logger.info("Connecting to mqtt with clientId: " + clientId);
@@ -38,6 +39,8 @@ public class Bridge implements MqttCallback {
 	private void reconnect() throws MqttException {
 		IMqttToken token = mqtt.connect();
 		token.waitForCompletion();
+
+		subscribe(topics);
 	}
 
 	private void subscribe(String[] mqttTopicFilters) throws MqttException {
@@ -99,7 +102,7 @@ public class Bridge implements MqttCallback {
 		int kafkaBatchSize = Integer.parseInt(properties.getProperty("kafka.batch.size"));
 		int kafkaBufferSize = Integer.parseInt(properties.getProperty("kafka.buffer.size"));
 		int numOfBridges = Integer.parseInt(properties.getProperty("numOfBridges"));
-		String[] topics = properties.getProperty("topics").split(",");
+		topics = properties.getProperty("topics").split(",");
 
 		try {
 			for (int i = 0; i < numOfBridges; i++) {

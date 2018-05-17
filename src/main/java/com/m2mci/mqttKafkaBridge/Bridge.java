@@ -1,5 +1,7 @@
 package com.m2mci.mqttKafkaBridge;
 
+import com.timgroup.statsd.NonBlockingStatsDClient;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
@@ -16,7 +18,14 @@ public class Bridge implements MqttCallback {
 	private KafkaProducer<String, byte[]> kafkaProducer;
 	private static final int MQTT_CLIENT_ID_MAX_LENGTH = 23;
 	private static String[] topics;
-	
+
+	private static final StatsDClient statsd = new NonBlockingStatsDClient(
+			"mqtt_kafka_bridge",
+			"localhost",
+			8125,
+			new String[] {}
+	);
+
 	private void connect(String serverURI, String clientId, String bootstrapServers, int kafkaBatchSize, int kafkaBufferSize, String dataDir) throws MqttException {
 		logger.info("Connecting to mqtt with clientId: " + clientId);
 		mqtt = new MqttAsyncClient(serverURI, clientId, new MqttDefaultFilePersistence(dataDir));
@@ -25,7 +34,7 @@ public class Bridge implements MqttCallback {
 		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrapServers);
 		props.put("acks", "1");
-		props.put("retries", 0);
+		props.put("retries", 5);
 		props.put("batch.size", kafkaBatchSize);
 		props.put("linger.ms", 1);
 		props.put("buffer.memory", kafkaBufferSize);
@@ -79,6 +88,8 @@ public class Bridge implements MqttCallback {
 	}
 
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		statsd.incrementCounter("message_arrived");
+
 		byte[] payload = message.getPayload();
 		ProducerRecord<String, byte[]> data = new ProducerRecord<String, byte[]>(topic, payload);
 		kafkaProducer.send(data);
